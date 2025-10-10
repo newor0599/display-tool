@@ -1,0 +1,106 @@
+$ui-aa:rgb(192, 194, 171);
+$ui-ab:rgb(163, 142, 46);
+$ui-con:rgb(43, 54, 25);
+window{
+  background:$ui-con;
+}
+
+dropdown,
+dropdown *,
+dropdown * *,
+popover *,
+popover {
+  all: unset;
+  transition: .3s ease;
+}
+
+dropdown {
+  border-radius: 100px;
+  background: $ui-aa;
+  color: $ui-con;
+}
+
+dropdown button {
+  padding: 0;
+  border-radius: 100px;
+  padding: .5rem;
+}
+
+dropdown button arrow {
+  -gtk-icon-source: -gtk-icontheme("pan-down-symbolic");
+  color: $ui-con;
+  padding: 0;
+  /* margin-top: .5rem; */
+  margin-bottom: -.5rem;
+}
+
+popover.menu {
+  transition: .3s ease;
+  background: $ui-aa;
+  color: $ui-con;
+  margin-top: .4rem;
+  border-radius: 1.3rem;
+}
+
+popover.menu contents {
+  padding: .5rem;
+  border: .4rem solid $ui-con;
+  border-radius: 1rem;
+  margin-bottom: .2rem;
+}
+
+* {
+  outline: none;
+}
+
+scrollbar {
+  background: transparent;
+  border: none;
+}
+
+scrollbar slider {
+  background: $ui-aa;
+}
+
+scrollbar slider:active {
+  background: $ui-ab;
+}
+
+scrollbar trough {
+  background: transparent;
+  background: rgba($ui-con, .5);
+  border: .1rem solid $ui-ab;
+  outline: none;
+  border-radius: 5rem;
+  transition: .3s ease;
+}
+.monitor.fixed,.monitor.sett{
+  border-radius:.5rem;
+  background: $ui-ab;
+  border:2px solid $ui-aa;
+  margin:10px;
+}
+
+.monitor.box{
+  min-height:40rem;
+}
+
+.monitor.display{
+  background:rgba($ui-aa,.6);
+  color:$ui-con;
+  box-shadow: 0 0 10px 1px $ui-con inset;
+  border-radius:.3rem;
+}
+
+spinbutton text{
+  min-width:100px;
+}
+
+.monitor.sett{
+  padding:1rem;
+}
+
+.monitor.sett>label{
+  font-size:1.5rem;
+  font-weight:700;
+}
