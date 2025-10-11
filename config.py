@@ -6,7 +6,6 @@
 # TODO Toggle collision
 import json
 from logic import Logic, display_data
-from typing import Callable
 import gi
 import operator
 from gi.repository import Gtk
@@ -40,7 +39,6 @@ class DisplayControl(Widget.Box):
                 self.get_plane_pos(),
             )
         )
-        self.glob.update_sett(disp.data)
 
     def on_update(self, disp):
         move = map(operator.add, self.get_plane_pos(), self.diff)
@@ -52,6 +50,7 @@ class DisplayControl(Widget.Box):
         max_height = self.plane.get_height() - disp.get_height()
         move_x, move_y = map(min, (max_width, max_height), map(max, (0, 0), move))
         snap_range = 10
+
         # edge snap
         if move_x <= snap_range:
             move_x = 0
@@ -108,11 +107,40 @@ class DisplayControl(Widget.Box):
                     move_x = pos[0] + i.get_width() - disp.get_width()
 
         self.plane.move(disp, move_x, move_y)
-        disp.data.x = self.plane.get_child_position(disp)[0] / self.display_scale
-        disp.data.y = self.plane.get_child_position(disp)[1] / self.display_scale
-        self.glob.update_sett(disp.data)
+        disp.data.x = move_x / self.display_scale
+        disp.data.y = move_y / self.display_scale
+        self.glob.x.set_value(disp.data.x)
+        self.glob.y.set_value(disp.data.y)
 
-    def add_display(self, disp_data: display_data, sett_update: Callable):
+    def set_pos(self, disp, x, y):
+        disp.data.x = x
+        disp.data.y = y
+        move_x = x * self.display_scale
+        move_y = y * self.display_scale
+        self.plane.move(
+            disp,
+            move_x,
+            move_y,
+        )
+
+    def set_mode(self, disp, w, h, refresh):
+        disp.set_style(
+            f"min-width:{w * self.display_scale / disp.data.scale}px;min-height:{h * self.display_scale / disp.data.scale}px;"
+        )
+        disp.data.width = w
+        disp.data.height = h
+        disp.data.refresh = refresh
+
+    def set_scale(self, disp, scale):
+        disp.data.scale = scale
+        self.set_mode(
+            disp,
+            disp.data.mode["width"],
+            disp.data.mode["height"],
+            disp.data.refresh,
+        )
+
+    def add_display(self, disp_data: display_data):
         data = disp_data
         disp = Widget.EventBox(
             child=[
@@ -139,7 +167,7 @@ class DisplayControl(Widget.Box):
         controller = Gtk.GestureClick()
         controller.connect(
             "pressed",
-            lambda *args: self.glob.update_sett(disp.data),
+            lambda *args: self.glob.set_display_data(disp),
         )
         disp.add_controller(controller)
         self.plane.put(
@@ -148,6 +176,10 @@ class DisplayControl(Widget.Box):
             data.y * self.display_scale,
         )
         self.plane_child.append(disp)
+
+    def clear_displays(self):
+        [self.plane.remove(i) for i in self.plane_child]
+        self.plane_child = []
 
     def get_plane_pos(self):
         pointer = self.get_display().get_default_seat().get_pointer()
@@ -163,26 +195,24 @@ class MainWindow(Widget.RegularWindow):
         super().__init__(*args, **kwargs)
         self.glob = glob
         self.set_default_size(1920 // 2, 1080 // 2)
-        self.set_title("Test Drag & Drop")
+        self.set_title("Display tool")
 
         # Display positions
         self.disp_ctrl = DisplayControl(self.glob)
-        wlrs = json.loads(Utils.exec_sh("wlr-randr --json").stdout)
-        tmp_disp = '{ "name": "HDMI-A-1", "description": "Daewoo Electronics Company Ltd HDMI 0 (HDMI-A-1)", "make": "Daewoo Electronics Company Ltd", "model": "HDMI", "serial": "0", "physical_size": { "width": 340, "height": 190 }, "enabled": true, "modes": [ { "width": 1366, "height": 768, "refresh": 59.790001, "preferred": true, "current": true }, { "width": 1920, "height": 1080, "refresh": 60.000000, "preferred": false, "current": false }, { "width": 1920, "height": 1080, "refresh": 59.939999, "preferred": false, "current": false }, { "width": 1920, "height": 1080, "refresh": 50.000000, "preferred": false, "current": false }, { "width": 1920, "height": 1080, "refresh": 50.000000, "preferred": false, "current": false }, { "width": 1280, "height": 720, "refresh": 60.000000, "preferred": false, "current": false }, { "width": 1280, "height": 720, "refresh": 60.000000, "preferred": false, "current": false }, { "width": 1280, "height": 720, "refresh": 59.939999, "preferred": false, "current": false }, { "width": 1280, "height": 720, "refresh": 50.000000, "preferred": false, "current": false }, { "width": 1280, "height": 720, "refresh": 50.000000, "preferred": false, "current": false }, { "width": 1024, "height": 768, "refresh": 75.028999, "preferred": false, "current": false }, { "width": 1024, "height": 768, "refresh": 72.003998, "preferred": false, "current": false }, { "width": 1024, "height": 768, "refresh": 70.069000, "preferred": false, "current": false }, { "width": 1024, "height": 768, "refresh": 60.004002, "preferred": false, "current": false }, { "width": 960, "height": 720, "refresh": 59.966999, "preferred": false, "current": false }, { "width": 832, "height": 624, "refresh": 74.551003, "preferred": false, "current": false }, { "width": 800, "height": 600, "refresh": 75.000000, "preferred": false, "current": false }, { "width": 800, "height": 600, "refresh": 72.188004, "preferred": false, "current": false }, { "width": 800, "height": 600, "refresh": 60.317001, "preferred": false, "current": false }, { "width": 800, "height": 600, "refresh": 56.250000, "preferred": false, "current": false }, { "width": 720, "height": 576, "refresh": 50.000000, "preferred": false, "current": false }, { "width": 720, "height": 576, "refresh": 50.000000, "preferred": false, "current": false }, { "width": 720, "height": 576, "refresh": 50.000000, "preferred": false, "current": false }, { "width": 720, "height": 480, "refresh": 60.000000, "preferred": false, "current": false }, { "width": 720, "height": 480, "refresh": 60.000000, "preferred": false, "current": false }, { "width": 720, "height": 480, "refresh": 59.939999, "preferred": false, "current": false }, { "width": 720, "height": 480, "refresh": 59.939999, "preferred": false, "current": false }, { "width": 640, "height": 480, "refresh": 75.000000, "preferred": false, "current": false }, { "width": 640, "height": 480, "refresh": 72.808998, "preferred": false, "current": false }, { "width": 640, "height": 480, "refresh": 66.667000, "preferred": false, "current": false }, { "width": 640, "height": 480, "refresh": 60.000000, "preferred": false, "current": false }, { "width": 640, "height": 480, "refresh": 59.939999, "preferred": false, "current": false }, { "width": 720, "height": 400, "refresh": 70.082001, "preferred": false, "current": false } ], "position": { "x": 0, "y": 0 }, "transform": "normal", "scale": 1.000000, "adaptive_sync": false }'
-        # wlrs.append(json.loads(tmp_disp))
-        [
-            self.disp_ctrl.add_display(display_data(i), self.glob.update_sett)
-            for i in wlrs
-        ]
+        [self.disp_ctrl.add_display(i) for i in self.get_wlr()]
+        self.glob.set_display_data(self.disp_ctrl.plane_child[0])
 
         # Settings
-        self.data = display_data({})
         self.disp_name = Widget.Label(
             label=self.glob.name.bind("value"), halign="start"
         )
         self.disp_modes = Widget.DropDown(
-            items=self.glob.modes.bind(
-                "value",
+            items=self.glob.modes.bind("value"),
+            on_selected=lambda x, selected: self.disp_ctrl.set_mode(
+                self.glob.disp,
+                int(selected[: selected.find("x")]),
+                int(selected[selected.find("x") + 1 : selected.find("@")]),
+                float(selected[selected.find("@") + 1 :]),
             ),
         )
         self.disp_x = Widget.SpinButton(
@@ -190,24 +220,40 @@ class MainWindow(Widget.RegularWindow):
             max=1920 * 2,
             step=1,
             value=self.glob.x.bind("value"),
+            on_change=lambda x, y: self.disp_ctrl.set_pos(
+                self.glob.disp, y, self.glob.disp.data.y
+            ),
         )
         self.disp_y = Widget.SpinButton(
             min=0,
             max=1920 * 2,
             step=1,
             value=self.glob.y.bind("value"),
+            on_change=lambda x, y: self.disp_ctrl.set_pos(
+                self.glob.disp, self.glob.disp.data.x, y
+            ),
         )
         self.disp_scale = Widget.SpinButton(
-            min=1,
-            max=200,
-            step=1,
+            min=0.1,
+            max=2.0,
+            step=0.01,
             value=self.glob.scale.bind("value"),
+            on_change=lambda x, y: self.disp_ctrl.set_scale(self.glob.disp, y),
+        )
+        self.disp_en = Widget.ToggleButton(
+            label="Enable",
+            on_toggled=lambda x, active: setattr(
+                self.glob.disp.data, "enabled", active
+            ),
+            active=self.glob.disp.data.enabled,
         )
         self.disp_apply = Widget.Button(
             label="Apply settings",
-            on_click=lambda x: [
-                self.glob.apply(i.data) for i in self.disp_ctrl.plane_child
-            ],
+            on_click=lambda x: (
+                [self.glob.apply_cmd(i.data) for i in self.disp_ctrl.plane_child],
+                self.disp_ctrl.clear_displays(),
+                [self.disp_ctrl.add_display(i) for i in self.get_wlr()],
+            ),
         )
 
         self.sett_box = Widget.Box(
@@ -217,6 +263,7 @@ class MainWindow(Widget.RegularWindow):
                 self.disp_x,
                 self.disp_y,
                 self.disp_scale,
+                self.disp_en,
                 self.disp_apply,
             ],
             vexpand=True,
@@ -228,6 +275,12 @@ class MainWindow(Widget.RegularWindow):
 
         # Group
         self.set_child(Widget.Box(child=[self.disp_ctrl, self.sett_box], vertical=True))
+
+    def get_wlr(self):
+        return [
+            display_data(i)
+            for i in json.loads(Utils.exec_sh("wlr-randr --json").stdout)
+        ]
 
 
 app = IgnisApp.get_default()
