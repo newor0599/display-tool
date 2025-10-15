@@ -219,6 +219,7 @@ class MainWindow(Widget.RegularWindow):
             min=0,
             max=1920 * 2,
             step=1,
+            digits=3,
             value=self.glob.x.bind("value"),
             on_change=lambda x, y: self.disp_ctrl.set_pos(
                 self.glob.disp, y, self.glob.disp.data.y
@@ -227,6 +228,7 @@ class MainWindow(Widget.RegularWindow):
         self.disp_y = Widget.SpinButton(
             min=0,
             max=1920 * 2,
+            digits=3,
             step=1,
             value=self.glob.y.bind("value"),
             on_change=lambda x, y: self.disp_ctrl.set_pos(
@@ -237,6 +239,7 @@ class MainWindow(Widget.RegularWindow):
             min=0.1,
             max=2.0,
             step=0.01,
+            digits=3,
             value=self.glob.scale.bind("value"),
             on_change=lambda x, y: self.disp_ctrl.set_scale(self.glob.disp, y),
         )
